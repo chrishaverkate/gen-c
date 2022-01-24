@@ -216,8 +216,9 @@ class Generate(object):
         print_info('Project directory created.')
 
     def initialize_git_repo(self):
-        self._repo = Repo.init(self._project.dir + "/.git", bare=True)
-        assert self._repo.bare
+        self._repo = Repo.init(self._project.dir)
+        git = self._repo.git
+        git.checkout(b='main')
 
     def build_folder_structure(self):
         folders = ['app', 'docs', 'extern', 'include', f"include/{self._project.name_for_folder}", 'src', 'tests', 'tests/benchmark', 'tests/unit']
