@@ -18,3 +18,60 @@ The output is:
 * Clang-format file
 
 All of this is bundled in a freshly initialized Git repo.
+
+# Usage
+Create a new project named AwesomePrj in the /tmp/awesome-prj folder
+
+```
+$ python3 -n AwesomePrj -d /tmp/awesome-prj
+==================================
+Pre-action summary of options:
+
+Project name: AwesomePrj
+Project base directory: /tmp/awesome-prj
+Include Google Test: True
+Include Google Benchmark: True
+Delete existing project: False
+==================================
+
+----------------------------------
+Running...
+! Info: Project directory created.
+! Info: Basic folder structure created.
+! Info: Source files created.
+! Info: CMake Files created.
+! Info: Cloned Google Test.
+! Info: Cloned Google Benchmark.
+! Info: Supporting files created.
+Finished!
+----------------------------------
+
+==================================
+Generation Report:
+
+awesome-prj/
+├── .clang-format
+├── .gitmodules
+├── app/
+│   ├── CMakeLists.txt
+│   └── main.cpp
+├── CMakeLists.txt
+├── docs/
+├── extern/
+│   └── CMakeLists.txt
+├── include/
+│   ├── awesome_prj/
+│   │   └── message.h
+│   └── CMakeLists.txt
+├── readme.md
+├── src/
+│   ├── CMakeLists.txt
+│   └── message.cpp
+└── tests/
+    ├── CMakeLists.txt
+    └── unit/
+        ├── CMakeLists.txt
+        └── message_tests.cpp
+
+==================================
+```

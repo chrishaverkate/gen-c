@@ -1,5 +1,3 @@
-#! /bin/python3
-
 import argparse
 from git import Repo, Submodule
 import os
