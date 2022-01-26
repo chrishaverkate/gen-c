@@ -1,7 +1,7 @@
 #! /bin/python3
 
 import argparse
-from git import Repo
+from git import Repo, Submodule
 import os
 import re
 import shutil
@@ -52,6 +52,33 @@ using std::unique_ptr;
 unique_ptr<string> Message::get_hello() const {
 	return make_unique<string>("Hello World!");
 }
+"""
+
+    @staticmethod
+    def tests_unit():
+        return """#include <gtest/gtest.h>
+
+#include <#PROJECT_NAME#/message.h>
+
+TEST(MessageTests, get_hello) {
+	Message m;
+	ASSERT_STREQ("Hello World!", m.get_hello()->c_str());
+}
+"""
+
+    @staticmethod
+    def tests_benchmark():
+        return """#include <benchmark/benchmark.h>
+
+#include <#PROJECT_NAME#/message.h>
+
+static void get_hello(benchmark::State& state) {
+	Message m;
+	for (auto _ : state)
+		auto hello = m.get_hello();
+}
+
+BENCHMARK(get_hello);
 """
 
 
@@ -136,11 +163,128 @@ set_target_properties(${target_name}
 
     @staticmethod
     def tests():
-        return """ """
+        return """include(GoogleTest)
+enable_testing()
+
+include_directories("${CMAKE_SOURCE_DIR}/src")
+
+add_subdirectory(benchmark)
+add_subdirectory(unit)
+"""
 
     @staticmethod
     def extern():
-        return """ """
+        return """add_subdirectory(googletest)
+add_subdirectory(benchmark)
+"""
+
+    @staticmethod
+    def tests_unit():
+        return """set(target_name tests-unit)
+
+add_executable(${target_name}
+	message_tests.cpp
+)
+
+set_target_properties(${target_name}
+	PROPERTIES
+		C_STANDARD 11
+		CXX_STANDARD 17
+)
+
+target_link_libraries(${target_name}
+	${CMAKE_PROJECT_NAME}_lib
+	${CMAKE_PROJECT_NAME}_includes
+	gtest_main
+)
+
+gtest_discover_tests(${target_name})
+"""
+
+    @staticmethod
+    def tests_benchmark():
+        return """set(target_name tests-perf)
+
+add_executable(${target_name}
+	message_perf.cpp
+)
+
+set_target_properties(${target_name}
+	PROPERTIES
+		C_STANDARD 11
+		CXX_STANDARD 17
+)
+
+target_link_libraries(${target_name}
+	${CMAKE_PROJECT_NAME}_lib
+	${CMAKE_PROJECT_NAME}_includes
+	benchmark::benchmark_main
+)
+"""
+
+
+class SupportFiles(object):
+    @staticmethod
+    def readme():
+        return """# Overview
+*Add high-level description about project*
+
+# Dependencies
+*Describe the things needed to build/use this project*
+
+# Resources
+*Provide some notes, links, etc. that help understand the context*
+"""
+
+    @staticmethod
+    def clang_format():
+        return """---
+Language: Cpp
+Standard: c++17
+
+# Alignment
+AlignAfterOpenBracket: Align
+AlignEscapedNewlines: Left
+AlignOperands: AlignAfterOperator
+AllowShortIfStatementsOnASingleLine: Never
+PointerAlignment: Left
+SpaceBeforeParens: ControlStatements
+SpaceBeforeAssignmentOperators: true
+
+# Tabs & Indent
+UseTab: ForIndentation
+TabWidth: 4
+IndentWidth: 4
+ContinuationIndentWidth: 4
+AccessModifierOffset: -4
+NamespaceIndentation: None
+SpacesBeforeTrailingComments: 2
+
+# Line breaks
+ColumnLimit: 0
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: None
+BinPackArguments: false
+BinPackParameters: false
+ReflowComments: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+BreakConstructorInitializersBeforeComma: true
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterStruct: false
+  AfterExternBlock: false
+  BeforeCatch: false
+  BeforeElse: false
+  IndentBraces: false
+...
+
+"""
 
 
 class Project(object):
@@ -223,18 +367,20 @@ class Generate(object):
     def build_folder_structure(self):
         folders = ['app', 'docs', 'extern', 'include', f"include/{self._project.name_for_folder}", 'src', 'tests', 'tests/benchmark', 'tests/unit']
         for folder in folders:
-            os.mkdir(self._project.dir + '/' + folder)
+            os.mkdir(f"{self._project.dir}/{folder}")
 
         print_info("Basic folder structure created.")
 
     def create_source_files(self):
-        source_files = [("app/main.cpp", SourceFiles.app().replace('#PROJECT_NAME#', self._project.name_for_folder)),
-                       (f"include/{self._project.name_for_folder}/message.h", SourceFiles.include_message_h()),
-                       ("src/message.cpp", SourceFiles.src_message_cpp().replace('#PROJECT_NAME#', self._project.name_for_folder))]
+        source_files = [("app/main.cpp", SourceFiles.app()),
+                        (f"include/{self._project.name_for_folder}/message.h", SourceFiles.include_message_h()),
+                        ("src/message.cpp", SourceFiles.src_message_cpp()),
+                        ("tests/unit/message_tests.cpp", SourceFiles.tests_unit()),
+                        ("tests/benchmark/message_perf.cpp", SourceFiles.tests_benchmark())]
 
         for (file, content) in source_files:
-            with open(self._project.dir + '/' + file, 'w') as w:
-                w.write(content)
+            with open(f"{self._project.dir}/{file}", 'w') as w:
+                w.write(content.replace('#PROJECT_NAME#', self._project.name_for_folder))
 
         print_info('Source files created.')
 
@@ -244,38 +390,36 @@ class Generate(object):
                        ("include/", CmakeFiles.includes()),
                        ("src/", CmakeFiles.src()),
                        ("tests/", CmakeFiles.tests()),
-                       ("extern/", CmakeFiles.extern())]
+                       ("extern/", CmakeFiles.extern()),
+                       ("tests/", CmakeFiles.tests()),
+                       ("tests/unit/", CmakeFiles.tests_unit()),
+                       ("tests/benchmark/", CmakeFiles.tests_benchmark())]
 
         for (folder, content) in cmake_files:
-            with open(self._project.dir + '/' + folder + '/CMakeLists.txt', 'w') as w:
+            with open(f"{self._project.dir}/{folder}/CMakeLists.txt", 'w') as w:
                 w.write(content)
 
         print_info('CMake Files created.')
-
-        """
-            4. place default CMakeLists.txt in each folder
-
-            Notes about CMake
-                - project command uses name
-                - lib is named ${CMAKE_PROJECT_NAME}_lib
-                  - lib returns the "Hello World" string
-                - app is basic command line (hello world) named ${CMAKE_PROJECT_NAME}_cli
-                - a basic unit test exits for lib
-                - a basic benchmark test exists for getting the string
-        """
         pass
 
     def clone_external_dependencies(self):
-        """
-            5. clone google test and benchmark
-        """
-        pass
+        if self._project.include_tests:
+            Submodule.add(self._repo, 'googletest', 'extern/googletest', 'https://github.com/google/googletest.git')
+            print_info('Cloned Google Test.')
+
+        if self._project.include_benchmark:
+            Submodule.add(self._repo, 'benchmark', 'extern/benchmark', 'https://github.com/google/benchmark.git')
+            print_info('Cloned Google Benchmark.')
 
     def add_supporting_files(self):
-        """
-            6. start basic readme.md
-        """
-        pass
+        files = [("readme.md", SupportFiles.readme()),
+                 (".clang-format", SupportFiles.clang_format())]
+
+        for (file, content) in files:
+            with open(f"{self._project.dir}/{file}", 'w') as w:
+                w.write(content)
+
+        print_info('Supporting files created.')
 
 
 if __name__ == "__main__":
