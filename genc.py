@@ -351,6 +351,7 @@ class Generate(object):
         self.build_cmake_structure()
         self.clone_external_dependencies()
         self.add_supporting_files()
+        self.add_files_to_git()
         print('Finished!\n----------------------------------')
 
     def initialize_folder_structure(self):
@@ -426,6 +427,10 @@ class Generate(object):
                 w.write(content)
 
         print_info('Supporting files created.')
+
+    def add_files_to_git(self):
+        self._repo.git.add(self._project.dir, all=True)
+        print_info('All files staged for initial commit')
 
 
 class DisplayablePath(object):
