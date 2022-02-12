@@ -174,6 +174,8 @@ add_subdirectory(unit)
     @staticmethod
     def extern():
         return """add_subdirectory(googletest)
+        
+set(BENCHMARK_ENABLE_TESTING OFF)
 add_subdirectory(benchmark)
 """
 
