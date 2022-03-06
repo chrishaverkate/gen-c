@@ -108,9 +108,8 @@ add_executable(${target_name}
 
 target_link_libraries(${target_name}
 	PUBLIC
-
-	${CMAKE_PROJECT_NAME}_includes
-	${CMAKE_PROJECT_NAME}_lib
+		${CMAKE_PROJECT_NAME}_includes
+		${CMAKE_PROJECT_NAME}_lib
 )
 
 set_target_properties(${target_name}
@@ -130,10 +129,9 @@ add_library(
 	INTERFACE
 )
 
-target_include_directories(
-	${target_name}
+target_include_directories(${target_name}
 	INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 """
 
@@ -143,14 +141,12 @@ target_include_directories(
 
 add_library(${target_name}
 	OBJECT
-	message.cpp
+		message.cpp
 )
 
-target_link_libraries(
-	${target_name}
+target_link_libraries(${target_name}
 	PUBLIC
-
-	${CMAKE_PROJECT_NAME}_includes
+		${CMAKE_PROJECT_NAME}_includes
 )
 
 set_target_properties(${target_name}
@@ -167,7 +163,7 @@ enable_testing()
 
 include_directories("${CMAKE_SOURCE_DIR}/src")
 
-add_subdirectory(benchmark)
+add_subdirectory(perf)
 add_subdirectory(unit)
 """
 
@@ -203,7 +199,7 @@ gtest_discover_tests(${target_name})
 """
 
     @staticmethod
-    def tests_benchmark():
+    def tests_perf():
         return """set(target_name tests-perf)
 
 add_executable(${target_name}
@@ -372,7 +368,7 @@ class Generate(object):
         git.checkout(b='main')
 
     def build_folder_structure(self):
-        folders = ['app', 'docs', 'extern', 'include', f"include/{self._project.name_for_folder}", 'src', 'tests', 'tests/benchmark', 'tests/unit']
+        folders = ['app', 'docs', 'extern', 'include', f"include/{self._project.name_for_folder}", 'src', 'tests', 'tests/perf', 'tests/unit']
         for folder in folders:
             os.mkdir(f"{self._project.dir}/{folder}")
 
@@ -383,7 +379,7 @@ class Generate(object):
                         (f"include/{self._project.name_for_folder}/message.h", SourceFiles.include_message_h()),
                         ("src/message.cpp", SourceFiles.src_message_cpp()),
                         ("tests/unit/message_tests.cpp", SourceFiles.tests_unit()),
-                        ("tests/benchmark/message_perf.cpp", SourceFiles.tests_benchmark())]
+                        ("tests/perf/message_perf.cpp", SourceFiles.tests_benchmark())]
 
         for (file, content) in source_files:
             with open(f"{self._project.dir}/{file}", 'w') as w:
@@ -400,7 +396,7 @@ class Generate(object):
                        ("extern/", CmakeFiles.extern()),
                        ("tests/", CmakeFiles.tests()),
                        ("tests/unit/", CmakeFiles.tests_unit()),
-                       ("tests/benchmark/", CmakeFiles.tests_benchmark())]
+                       ("tests/perf/", CmakeFiles.tests_perf())]
 
         for (folder, content) in cmake_files:
             with open(f"{self._project.dir}/{folder}/CMakeLists.txt", 'w') as w:
