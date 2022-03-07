@@ -124,8 +124,7 @@ set_target_properties(${target_name}
     def includes():
         return """set(target_name ${CMAKE_PROJECT_NAME}_includes)
 
-add_library(
-	${target_name}
+add_library(${target_name}
 	INTERFACE
 )
 
@@ -170,7 +169,7 @@ add_subdirectory(unit)
     @staticmethod
     def extern():
         return """add_subdirectory(googletest)
-        
+
 set(BENCHMARK_ENABLE_TESTING OFF)
 add_subdirectory(benchmark)
 """
