@@ -22,8 +22,14 @@ All of this is bundled in a freshly initialized Git repo.
 # Usage
 Create a new project named AwesomePrj in the /tmp/awesome-prj folder
 
+_Caution_: gen-c expects to create the project folder and will initialize a Git repo. 
+
 ```
-$ python3 -n AwesomePrj -d /tmp/awesome-prj
+python3 gen-c.py -n AwesomePrj -d /tmp/awesome-prj
+```
+
+Output:  
+```
 ==================================
 Pre-action summary of options:
 
@@ -75,3 +81,4 @@ awesome-prj/
 
 ==================================
 ```
+
