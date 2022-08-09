@@ -19,6 +19,11 @@ The output is:
 
 All of this is bundled in a freshly initialized Git repo.
 
+# Requirements
+```
+python3 -m pip install -r requirements.txt
+```
+
 # Usage
 Create a new project named AwesomePrj in the /tmp/awesome-prj folder
 
